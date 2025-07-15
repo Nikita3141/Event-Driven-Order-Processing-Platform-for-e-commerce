@@ -37,7 +37,7 @@ public class JwtConfig {
     public JwtParser jwtParser(SecretKey secretKey, JwtConfig jwtconfig) {
         return Jwts.parser()
                 .verifyWith(secretKey)
-                .requireIssuer(jwtconfig.getIssuer())
+                .requireIssuer(this.issuer)
                 .build();
     }
 

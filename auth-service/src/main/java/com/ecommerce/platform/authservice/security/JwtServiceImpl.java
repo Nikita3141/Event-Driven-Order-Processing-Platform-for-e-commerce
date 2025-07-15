@@ -19,7 +19,7 @@ import java.util.Date;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class JwtServiceImpl {
+public class JwtServiceImpl implements JwtService {
     // Ключ для подписи токенов (HMAC-SHA256)
     private final SecretKey signKey;
     // Время жизни access токена в миллисекундах
@@ -63,6 +63,10 @@ public class JwtServiceImpl {
                 .expiration(Date.from(Instant.now().plusMillis(expiration))) // Время истечения
                 .signWith(signKey)                 // Подписываем токен
                 .compact();                        // Преобразуем в строку
+    }
+
+    public long getAccessTokenExpirationInMillis() {
+        return jwtConfig.getAccessExpiration() * 1000L;
     }
 
     /**
@@ -138,4 +142,6 @@ public class JwtServiceImpl {
         return username.equals(userDetails.getUsername());
 
     }
+
+
 }

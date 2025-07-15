@@ -42,4 +42,8 @@ public interface JwtService {
      * @return true если токен валиден для пользователя, false иначе
      */
     boolean isTokenValidForUser(String token, UserDetails userDetails);
+
+    long getAccessTokenExpirationInMillis();
+
+
 }

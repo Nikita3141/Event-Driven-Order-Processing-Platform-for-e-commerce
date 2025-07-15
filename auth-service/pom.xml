@@ -67,7 +67,8 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <optional>true</optional>
+            <version>1.18.30</version> <!-- Явно указываем версию -->
+            <scope>provided</scope>
         </dependency>
 
         <!-- Common Module (если вы его создали) -->

@@ -1,5 +1,6 @@
 package com.ecommerce.platform.authservice.service;
 
+import com.ecommerce.platform.authservice.exception.InvalidTokenException;
 import com.ecommerce.platform.authservice.model.RefreshToken;
 import com.ecommerce.platform.authservice.model.User;
 
@@ -43,6 +44,18 @@ public interface RefreshTokenService {
      * @param user пользователь, чьи токены нужно удалить
      */
     void deleteAllByUser(User user);
+
+    /**
+     * Проверяет, не истёк ли срок действия refresh-токена.
+     * @throws InvalidTokenException если токен просрочен
+     */
+    void verifyExpiration(RefreshToken token);
+
+    /**
+     * Деактивирует refresh-токен (помечает как недействительный или удаляет)
+     * @param token RefreshToken для инвалидации
+     */
+    void invalidate(RefreshToken token);
 
     void deleteAllExpired();
 }
