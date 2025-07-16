@@ -1,9 +1,11 @@
 package com.ecommerce.platform.authservice.service;
 
+import com.ecommerce.platform.authservice.exception.InvalidTokenException;
 import com.ecommerce.platform.authservice.model.RefreshToken;
 import com.ecommerce.platform.authservice.model.User;
 import com.ecommerce.platform.authservice.repository.RefreshTokenRepository;
 import com.ecommerce.platform.authservice.repository.UserRepository;
+import com.ecommerce.platform.authservice.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +22,7 @@ import java.util.UUID;
 public class RefreshTokenServiceImpl implements RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
-    private final UserRepository userRepository;
+    private final JwtService jwtService;
 
     @Value("${jwt.refresh-expiration}")
     private long refreshTokenDurationMs;
@@ -31,24 +33,32 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Override
     public RefreshToken createRefreshToken(User user) {
         if (user == null) {
-            log.warn("User cannot be null");
+            throw new IllegalArgumentException("User cannot be null");
         }
         RefreshToken refreshToken = new RefreshToken(
                 UUID.randomUUID().toString(),
                 Instant.now().plusMillis(refreshTokenDurationMs),
                 user
         );
-        return refreshTokenRepository.save(refreshToken);
+
+        RefreshToken savedToken = refreshTokenRepository.save(refreshToken);
+        log.info("Refresh token created for user: {}", user.getId());
+        return savedToken;
     }
 
     @Override
     public boolean validateToken(String token) {
         if (token == null || token.isBlank()) {
-            log.warn("Token cannot be null or empty");
+            throw new IllegalArgumentException("Token cannot be null or empty");
         }
-        return refreshTokenRepository.findByToken(token)
-                .map(t -> !t.isExpired())
-                .orElse(false);
+        boolean isValid = jwtService.isTokenValid(token);
+
+        if (isValid) {
+            log.info("Token is valid: {}", token);
+        } else {
+            log.warn("Token is invalid: {}", token);
+        }
+        return isValid;
     }
 
     @Override
@@ -61,6 +71,22 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Transactional
     public void deleteAllByUser(User user) {
         refreshTokenRepository.deleteAllByUser(user);
+    }
+
+    @Override
+    @Transactional
+    public void verifyExpiration(RefreshToken token) {
+        if (token.getExpiryDate().isBefore(Instant.now())) {
+            refreshTokenRepository.delete(token); // Опционально: удаляем просроченный токен
+            throw new InvalidTokenException("Refresh token was expired");
+        }
+    }
+
+    @Override
+    @Transactional
+    public void invalidate(RefreshToken token) {
+        refreshTokenRepository.delete(token);
+        log.debug("Refresh token deleted: {}", token.getToken());
     }
 
     @Override
