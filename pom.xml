@@ -31,7 +31,6 @@
 	</properties>
 
 	<dependencies>
-		<!-- Общие зависимости для всех модулей -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -52,6 +51,11 @@
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
+				<groupId>org.projectlombok</groupId>
+				<artifactId>lombok</artifactId>
+				<version>1.18.30</version>
+			</dependency>
+			<dependency>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-dependencies</artifactId>
 				<version>2023.0.0</version>
@@ -69,6 +73,23 @@
 	</dependencyManagement>
 
 	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
+					<configuration>
+						<skip>true</skip> <!-- По умолчанию отключаем для всех модулей -->
+						<excludes>
+							<exclude>
+								<groupId>org.projectlombok</groupId>
+								<artifactId>lombok</artifactId>
+							</exclude>
+						</excludes>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -82,18 +103,28 @@
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-						</exclude>
-					</excludes>
-				</configuration>
-			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>spring-boot-app</id>
+			<activation>
+				<file>
+					<exists>src/main/java</exists>
+				</file>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.springframework.boot</groupId>
+						<artifactId>spring-boot-maven-plugin</artifactId>
+						<configuration>
+							<skip>false</skip> <!-- Включаем только для Spring Boot приложений -->
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>

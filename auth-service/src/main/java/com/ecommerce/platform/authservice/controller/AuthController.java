@@ -15,11 +15,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
+
 //@Tag(name = "Authentication", description = "API для аутентификации и управления токенами")
 public class AuthController {
 
     private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDto> authenticate(@Valid @RequestBody AuthRequestDto request) {

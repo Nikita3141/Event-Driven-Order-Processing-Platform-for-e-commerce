@@ -15,7 +15,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -24,7 +23,6 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenService refreshTokenService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-
 
     @Override
     @Transactional
