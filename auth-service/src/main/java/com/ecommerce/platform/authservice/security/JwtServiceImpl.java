@@ -33,7 +33,7 @@ public class JwtServiceImpl implements JwtService {
      * @return JWT токен с коротким временем жизни
      */
     public String generateAccessToken(User user) {
-        String token = buildToken(user, jwtConfig.getAccessExpiration());
+        String token = buildToken(user, jwtConfig.getAccessExpiration()); //строка где возникает ошибка
         log.debug("Generated access token for user: {}", user.getEmail());
         return token;
     }

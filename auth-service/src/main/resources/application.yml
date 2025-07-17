@@ -1,7 +1,24 @@
 spring.application.name: order-processing-platform
 
+
+spring:
+    datasource:
+        url: jdbc:postgresql://localhost:5432/mydatabase
+        username: myuser
+        password: secret
+        driver-class-name: org.postgresql.Driver
+
+    jpa:
+        hibernate:
+            ddl-auto: update
+        show-sql: true
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.PostgreSQLDialect
+
 jwt:
-    secret: "your-256-bit-secret-key-base64-encoded="
+    secret: "dGVzdFNlY3JldEtleS0yNTYteW91ci1zZWNyZXQta2V5LWJhc2U2NC1lbmNvZGVkPQ=="
     access-expiration: 86400000 # 24 ????
     refresh-expiration: 2592000000 # 30 ????
     issuer: "E-Commerce-Auth-Service" # ?????????? ??? ???????
+
