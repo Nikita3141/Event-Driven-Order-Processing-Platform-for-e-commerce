@@ -13,7 +13,7 @@ public class Role implements GrantedAuthority {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected Long id;
 
-    @Column(name = "rple_name" , unique = true)
+    @Column(name = "role_name" , unique = true)
     private String role;
 
     @Override

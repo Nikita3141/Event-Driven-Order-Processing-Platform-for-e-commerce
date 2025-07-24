@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-
   postgres:
     image: postgres:latest
     container_name: postgres_db
@@ -10,11 +9,15 @@ services:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: secret
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - "127.0.0.1:5432:5432"
 
-
-volumes:
-  postgres_data:
-
+  dbadmin:
+    image: dpage/pgadmin4:latest
+    container_name: dbadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com   # логин в web-интерфейсе
+      PGADMIN_DEFAULT_PASSWORD: admin            # пароль в web-интерфейсе
+    ports:
+      - "127.0.0.1:8080:80"                      # web-ui на http://localhost:8080
+    depends_on:
+      - postgres

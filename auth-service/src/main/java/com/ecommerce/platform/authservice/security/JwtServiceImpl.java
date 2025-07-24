@@ -4,6 +4,8 @@ import com.ecommerce.platform.authservice.model.User;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
@@ -16,10 +18,13 @@ import java.util.Date;
  * - Валидация токенов
  * - Извлечение данных из токенов
  */
-@Slf4j
+
 @Service
 @RequiredArgsConstructor
 public class JwtServiceImpl implements JwtService {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtServiceImpl.class);
+
     // Ключ для подписи токенов (HMAC-SHA256)
     private final SecretKey signKey;
     // Время жизни access токена в миллисекундах

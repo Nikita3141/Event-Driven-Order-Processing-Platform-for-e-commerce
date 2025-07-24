@@ -39,7 +39,6 @@ public class UserServiceImpl implements UserService {
         );
         log.info("User created with ID: {}", user.getId());
         return user;
-
     }
 
     @Override

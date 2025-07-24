@@ -15,10 +15,17 @@ spring:
         properties:
             hibernate:
                 dialect: org.hibernate.dialect.PostgreSQLDialect
+                hbm2ddl:
+                    auto: create
 
 jwt:
     secret: "dGVzdFNlY3JldEtleS0yNTYteW91ci1zZWNyZXQta2V5LWJhc2U2NC1lbmNvZGVkPQ=="
-    access-expiration: 86400000 # 24 ????
-    refresh-expiration: 2592000000 # 30 ????
-    issuer: "E-Commerce-Auth-Service" # ?????????? ??? ???????
+    access-expiration: 86400000 # 24
+    refresh-expiration: 2592000000 # 30
+    issuer: "E-Commerce-Auth-Service" #
 
+#    INSERT INTO role (rple_name) VALUES
+#    ('ROLE_USER'),
+#    ('ROLE_ADMIN');
+
+# psql -U myuser -d mydatabase
