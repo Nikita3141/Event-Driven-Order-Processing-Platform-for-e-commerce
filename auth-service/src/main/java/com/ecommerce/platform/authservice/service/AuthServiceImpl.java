@@ -69,7 +69,6 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    @Transactional
     public void logout(String refreshToken) {
         log.debug("Logout attempt with refresh token");
         refreshTokenService.findByToken(refreshToken)
@@ -83,7 +82,6 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    @Transactional
     public void logoutAll(Long userId) {
         log.info("Logging out all sessions for user ID: {}", userId);
         User user = userService.getUserById(userId)

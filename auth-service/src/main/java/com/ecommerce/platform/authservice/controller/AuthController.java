@@ -6,17 +6,16 @@ import com.ecommerce.platform.authservice.service.AuthService;
 import dto.AuthRequestDto;
 import dto.AuthResponseDto;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+//@Tag(name = "Authentication", description = "API для аутентификации и управления токенами")
+
 
 @RestController
 @RequestMapping("/api/auth")
-
-//@Tag(name = "Authentication", description = "API для аутентификации и управления токенами")
 public class AuthController {
 
     private final AuthService authService;
@@ -34,5 +33,12 @@ public class AuthController {
     public ResponseEntity<AuthResponseDto> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         return ResponseEntity.ok(authService.refreshToken(request));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody String request){
+        authService.logout(request);
+        return ResponseEntity.ok().build();
+    }
+
 
 }
