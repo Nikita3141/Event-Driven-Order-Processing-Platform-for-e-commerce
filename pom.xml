@@ -1,6 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -8,28 +6,24 @@
 		<version>3.5.3</version>
 		<relativePath/>
 	</parent>
-
 	<groupId>com.example</groupId>
 	<artifactId>order-processing-platform</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>order-processing-platform</name>
 	<description>Event-driven order processing platform for e-commerce</description>
-
 	<modules>
 		<module>api-gateway</module>
 		<module>auth-service</module>
 		<module>user-service</module>
 		<module>common-module</module>
 	</modules>
-
 	<properties>
 		<java.version>17</java.version>
 		<grpc.version>1.72.0</grpc.version>
 		<protobuf-java.version>4.30.2</protobuf-java.version>
 		<spring-grpc.version>0.9.0</spring-grpc.version>
 	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -47,7 +41,6 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -71,7 +64,6 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-
 	<build>
 		<pluginManagement>
 			<plugins>
@@ -79,13 +71,8 @@
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-maven-plugin</artifactId>
 					<configuration>
-						<skip>true</skip> <!-- По умолчанию отключаем для всех модулей -->
-						<excludes>
-							<exclude>
-								<groupId>org.projectlombok</groupId>
-								<artifactId>lombok</artifactId>
-							</exclude>
-						</excludes>
+						<skip>true</skip>
+						<!--  По умолчанию отключаем для всех модулей  -->
 					</configuration>
 				</plugin>
 			</plugins>
@@ -94,18 +81,21 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.11.0</version>
 				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
-
 	<profiles>
 		<profile>
 			<id>spring-boot-app</id>
@@ -120,7 +110,8 @@
 						<groupId>org.springframework.boot</groupId>
 						<artifactId>spring-boot-maven-plugin</artifactId>
 						<configuration>
-							<skip>false</skip> <!-- Включаем только для Spring Boot приложений -->
+							<skip>false</skip>
+							<!--  Включаем только для Spring Boot приложений  -->
 						</configuration>
 					</plugin>
 				</plugins>
