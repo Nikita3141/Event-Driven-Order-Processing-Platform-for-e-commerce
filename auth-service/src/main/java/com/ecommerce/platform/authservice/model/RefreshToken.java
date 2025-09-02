@@ -28,13 +28,4 @@ public class RefreshToken {
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
-//    public boolean isExpired(){
-//        return expiryDate.isBefore(Instant.now());
-//    }
-
-    public RefreshToken( String token,Instant expiryDate, User user) {
-        this.expiryDate = expiryDate;
-        this.token = token;
-        this.user = user;
-    }
 }
