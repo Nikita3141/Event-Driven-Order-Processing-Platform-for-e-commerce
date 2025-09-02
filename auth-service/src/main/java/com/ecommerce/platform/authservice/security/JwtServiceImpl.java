@@ -1,16 +1,19 @@
 package com.ecommerce.platform.authservice.security;
-import com.ecommerce.platform.authservice.config.JwtConfig;
 import com.ecommerce.platform.authservice.model.User;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import javax.crypto.SecretKey;
-import java.time.Instant;
+
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
+
+import org.springframework.security.core.GrantedAuthority;
+
+import javax.crypto.SecretKey;
 
 /**
  * Сервис для работы с JWT токенами:
@@ -18,135 +21,71 @@ import java.util.Date;
  * - Валидация токенов
  * - Извлечение данных из токенов
  */
-
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class JwtServiceImpl implements JwtService {
 
-    private static final Logger log = LoggerFactory.getLogger(JwtServiceImpl.class);
+    @Value("${jwt.secret}")
+    private String secret;
 
-    // Ключ для подписи токенов (HMAC-SHA256)
-    private final SecretKey signKey;
-    // Время жизни access токена в миллисекундах
-    private final JwtConfig jwtConfig;
-    // Время жизни refresh токена в миллисекундах
-    private final JwtParser jwtParser;
+    @Value("${jwt.access-expiration}") // в мс, например 900000 = 15 мин
+    private long expiration;
 
-    /**
-     * Генерация access токена
-     * @param user объект пользователя
-     * @return JWT токен с коротким временем жизни
-     */
-    public String generateAccessToken(User user) {
-        String token = buildToken(user, jwtConfig.getAccessExpiration()); //строка где возникает ошибка
-        log.debug("Generated access token for user: {}", user.getEmail());
-        return token;
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    /**
-     * Генерация refresh токена
-     * @param user объект пользователя
-     * @return JWT токен с длительным временем жизни
-     */
-    public String generateRefreshToken(User user) {
-        String token = buildToken(user, jwtConfig.getRefreshExpiration());
-        log.debug("Generated refresh token for user: {}", user.getEmail());
-        return token;
-    }
-
-    /**
-     * Внутренний метод построения токена
-     * @param user объект пользователя
-     * @param expiration время жизни токена в мс
-     * @return подписанный JWT токен
-     */
-    private String buildToken(User user, long expiration) {
+    public String generateToken(User user) {
         return Jwts.builder()
-                .issuer(jwtConfig.getIssuer())
-                .subject(user.getEmail())          // Устанавливаем subject (email пользователя)
-                .issuedAt(Date.from(Instant.now())) // Время создания токена
-                .expiration(Date.from(Instant.now().plusMillis(expiration))) // Время истечения
-                .signWith(signKey)                 // Подписываем токен
-                .compact();                        // Преобразуем в строку
+                .setSubject(user.getUsername())
+                .claim("roles", user.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .toList())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
     }
 
-    public long getAccessTokenExpirationInMillis() {
-        return jwtConfig.getAccessExpiration() * 1000L;
+    public Claims getClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
-    /**
-     * Проверяет валидность токена
-     * @param token JWT токен
-     * @return true если токен валиден, false если просрочен или подпись неверна
-     */
-    public boolean isTokenValid(String token) {
-        if(token == null || token.isBlank()){
-            log.warn("Token is null or blank");
-            return false;
-        }
+    public String getUsernameFromToken(String token) {
+        return getClaims(token).getSubject();
+    }
 
+    public List<String> getRoles(String token) {
+        return getClaims(token).get("roles", List.class);
+    }
+
+    public boolean isTokenExpired(String token) {
+        return getClaims(token).getExpiration().before(new Date());
+    }
+
+    public boolean validateToken(String token) {
         try {
-
-            Jws<Claims> claimsJws = jwtParser.parseSignedClaims(token);
-
-            if(claimsJws.getPayload().getExpiration().before(new Date())){
-                log.warn("Token is expired");
-                return false;
-            }
-
-            if(!claimsJws.getPayload().getIssuer().equals(jwtConfig.getIssuer())){
-                log.warn("Invalid token issuer");
-                return false;
-            }
-
-            log.debug("Token validation successful");
-            claimsJws.getPayload().getSubject();
-            return true;
-
-        } catch (ExpiredJwtException ex) {
-            log.warn("Token expired: {}", ex.getMessage());
-            return false;
-        } catch (MalformedJwtException ex) {
-            log.warn("Invalid token format: {}", ex.getMessage());
-            return false;
-        } catch (SecurityException ex) {
-            log.warn("Invalid signature: {}", ex.getMessage());
-            return false;
-        } catch (IllegalArgumentException ex) {
-            log.warn("Empty or null token");
-            return false;
+            Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token);
+            return !isTokenExpired(token);
+        } catch (ExpiredJwtException e) {
+            log.warn("Токен просрочен: {}", e.getMessage());
+        } catch (UnsupportedJwtException e) {
+            log.error("Неподдерживаемый токен: {}", e.getMessage());
+        } catch (MalformedJwtException e) {
+            log.error("Некорректный токен: {}", e.getMessage());
+        } catch (SignatureException e) {
+            log.error("Неверная подпись токена: {}", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            log.error("Пустой токен: {}", e.getMessage());
         }
+        return false;
     }
-
-    /**
-     * Извлекает имя пользователя (email) из токена
-     * @param token JWT токен
-     * @return email пользователя
-     * @throws JwtException если токен невалиден
-     */
-    public String extractUsername(String token) {
-        try {
-            String username = jwtParser
-                    .parseSignedClaims(token)
-                    .getPayload()
-                    .getSubject();
-            log.trace("Extracted username from token: {}", username);
-            return username;
-        } catch (JwtException ex) {
-            log.error("Failed to extract username from token: {}", ex.getMessage());
-            throw ex;
-        }
-    }
-
-    public boolean isTokenValidForUser(String token , UserDetails userDetails) {
-        if(!isTokenValid(token)){
-            return false;
-        }
-
-        final String username = extractUsername(token);
-        return username.equals(userDetails.getUsername());
-
-    }
-
-
 }
+

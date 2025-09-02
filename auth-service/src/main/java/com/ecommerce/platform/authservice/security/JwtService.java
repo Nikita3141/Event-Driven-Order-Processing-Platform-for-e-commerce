@@ -4,28 +4,23 @@ import com.ecommerce.platform.authservice.model.User;
 import io.jsonwebtoken.JwtException;
 import org.springframework.security.core.userdetails.UserDetails;
 
-public interface JwtService {
+import java.util.List;
 
-    /**
-     * Генерация access токена
-     * @param user объект пользователя
-     * @return JWT токен с коротким временем жизни
-     */
-    String generateAccessToken(User user);
+public interface JwtService {
 
     /**
      * Генерация refresh токена
      * @param user объект пользователя
      * @return JWT токен с длительным временем жизни
      */
-    String generateRefreshToken(User user);
+    String generateToken(User user);
 
     /**
      * Проверяет валидность токена
      * @param token JWT токен
      * @return true если токен валиден, false если просрочен или подпись неверна
      */
-    boolean isTokenValid(String token);
+    boolean validateToken(String token);
 
     /**
      * Извлекает имя пользователя (email) из токена
@@ -33,17 +28,10 @@ public interface JwtService {
      * @return email пользователя
      * @throws JwtException если токен невалиден
      */
-    String extractUsername(String token) throws JwtException;
+    String getUsernameFromToken(String token);
 
-    /**
-     * Проверяет валидность токена для пользователя
-     * @param token JWT токен
-     * @param userDetails объект UserDetails
-     * @return true если токен валиден для пользователя, false иначе
-     */
-    boolean isTokenValidForUser(String token, UserDetails userDetails);
+    List<String> getRoles(String token);
 
-    long getAccessTokenExpirationInMillis();
-
+    boolean isTokenExpired(String token);
 
 }

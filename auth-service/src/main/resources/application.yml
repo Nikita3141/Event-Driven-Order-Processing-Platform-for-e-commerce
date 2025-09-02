@@ -7,25 +7,29 @@ spring:
         username: myuser
         password: secret
         driver-class-name: org.postgresql.Driver
-
-    jpa:
-        hibernate:
-            ddl-auto: update
-        show-sql: true
-        properties:
+        jpa:
             hibernate:
-                dialect: org.hibernate.dialect.PostgreSQLDialect
-                hbm2ddl:
-                    auto: create
-
+                ddl-auto: none
+            show-sql: true
+            properties:
+                hibernate:
+                    dialect: org.hibernate.dialect.PostgreSQLDialect
+        flyway:
+            enabled: true
+            locations: db/migration
+            baseline-on-migrate: true
+        api-docs:
+            path: /api-docs
+            swagger-ui:
+                path: /swagger-ui.html
+                tags-sorter: alpha
+                operations-sorter: alpha
+                display-request-duration: true
+                persist-authorization: true  # Сохранять авторизацию между перезагрузками
 jwt:
     secret: "dGVzdFNlY3JldEtleS0yNTYteW91ci1zZWNyZXQta2V5LWJhc2U2NC1lbmNvZGVkPQ=="
-    access-expiration: 86400000 # 24
-    refresh-expiration: 2592000000 # 30
+    access-expiration: 900000 # 15 мин
+    refresh-expiration: 604800000 # 7 дней
     issuer: "E-Commerce-Auth-Service" #
 
-#    INSERT INTO role (rple_name) VALUES
-#    ('ROLE_USER'),
-#    ('ROLE_ADMIN');
-
-# psql -U myuser -d mydatabase
+#http://localhost:8080/swagger-ui/index.html

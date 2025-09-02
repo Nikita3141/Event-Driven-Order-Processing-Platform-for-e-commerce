@@ -1,17 +1,23 @@
 package com.ecommerce.platform.authservice.service;
 
-import com.ecommerce.platform.authservice.dto.RefreshTokenRequest;
+import com.ecommerce.platform.authservice.dto.JwtAuthenticationResponse;
+import com.ecommerce.platform.authservice.dto.RegisterRequest;
+import com.ecommerce.platform.authservice.dto.SignInRequest;
 import com.ecommerce.platform.authservice.exception.InvalidTokenException;
 import com.ecommerce.platform.authservice.exception.UserNotFoundException;
 import com.ecommerce.platform.authservice.model.RefreshToken;
+import com.ecommerce.platform.authservice.model.Role;
 import com.ecommerce.platform.authservice.model.User;
+import com.ecommerce.platform.authservice.repository.RefreshTokenRepository;
+import com.ecommerce.platform.authservice.repository.RoleRepository;
 import com.ecommerce.platform.authservice.security.JwtService;
-import dto.AuthRequestDto;
+import com.ecommerce.platform.authservice.security.RefreshTokenService;
 import dto.AuthResponseDto;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,90 +25,55 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+
     private final UserService userService;
-    private final RefreshTokenService refreshTokenService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     @Transactional
-    public AuthResponseDto authenticate(AuthRequestDto request) {
-        log.info("Authentication attempt for email: {}", request.email());
+    public JwtAuthenticationResponse authenticate(SignInRequest request) {
+        log.info("Authentication attempt for email: {}", request.getEmail());
 
-        User user = userService.getUserByEmail(request.email()).get();
+        User user = userService.getUserByEmail(request.getEmail())
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + request.getEmail()));
 
-        if(!passwordEncoder.matches(request.password(), user.getPassword())) {
+        if(!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new BadCredentialsException("Invalid password");
         }
-        String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = refreshTokenService.createRefreshToken(user).getToken();
 
-        return new AuthResponseDto(
+        String accessToken = jwtService.generateToken(user);
+
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+        return new JwtAuthenticationResponse(
                 accessToken,
-                refreshToken,
-                jwtService.getAccessTokenExpirationInMillis()
+                refreshToken.getRefreshToken()
         );
     }
 
-    @Override
-    public AuthResponseDto refreshToken(RefreshTokenRequest request) {
-        log.debug("Refreshing token with refresh token: {}", request.refreshToken());
+    public void logout (String username){
+        User user = userService.getUserByEmail(username)
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + username));
 
-        RefreshToken refreshToken = refreshTokenService.findByToken(request.refreshToken())
-                .orElseThrow(() -> new InvalidTokenException("Invalid refresh token"));
-
-        refreshTokenService.verifyExpiration(refreshToken);
-
-        User user = userService.getUserById(refreshToken.getUser().getId())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-
-        String newAccessToken = jwtService.generateAccessToken(user);
-        RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
-
-        log.info("Tokens refreshed for user: {}", user.getEmail());
-
-        return new AuthResponseDto(
-                newAccessToken,
-                newRefreshToken.getToken(),
-                jwtService.getAccessTokenExpirationInMillis()
-        );
+        refreshTokenService.deletByUser(user);
     }
 
     @Override
-    public void logout(String refreshToken) {
-        log.debug("Logout attempt with refresh token");
-        refreshTokenService.findByToken(refreshToken)
-                .ifPresentOrElse(
-                        token -> {
-                            refreshTokenService.invalidate(token);
-                            log.info("User {} logged out", token.getUser().getEmail());
-                        },
-                        () -> log.warn("Invalid refresh token provided for logout")
-                );
-    }
+    public JwtAuthenticationResponse register(RegisterRequest request) {
 
-    @Override
-    public void logoutAll(Long userId) {
-        log.info("Logging out all sessions for user ID: {}", userId);
-        User user = userService.getUserById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
-        refreshTokenService.deleteAllByUser(user);
-    }
-
-    @Override
-    public AuthResponseDto register(AuthRequestDto request) {
-        log.info("Registration attempt for email: {}", request.email());
+        log.info("Registration attempt for email: {}", request.getEmail());
 
         User user = userService.createUser(request);
-        String accessToken = jwtService.generateAccessToken(user);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        String jwtToken = jwtService.generateToken(user);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
         log.info("User {} successfully registered", user.getEmail());
 
-        return new AuthResponseDto(
-                accessToken,
-                refreshToken.getToken(),
-                jwtService.getAccessTokenExpirationInMillis()
+        return new JwtAuthenticationResponse(
+                jwtToken,
+                refreshToken.getRefreshToken()
         );
     }
 }
