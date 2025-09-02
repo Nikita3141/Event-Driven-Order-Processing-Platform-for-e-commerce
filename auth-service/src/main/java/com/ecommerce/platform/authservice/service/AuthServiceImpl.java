@@ -88,4 +88,21 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
         refreshTokenService.deleteAllByUser(user);
     }
+
+    @Override
+    public AuthResponseDto register(AuthRequestDto request) {
+        log.info("Registration attempt for email: {}", request.email());
+
+        User user = userService.createUser(request);
+        String accessToken = jwtService.generateAccessToken(user);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
+        log.info("User {} successfully registered", user.getEmail());
+
+        return new AuthResponseDto(
+                accessToken,
+                refreshToken.getToken(),
+                jwtService.getAccessTokenExpirationInMillis()
+        );
+    }
 }

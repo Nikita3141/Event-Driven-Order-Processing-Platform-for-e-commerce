@@ -35,11 +35,19 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null");
         }
-        RefreshToken refreshToken = new RefreshToken(
-                UUID.randomUUID().toString(),
-                Instant.now().plusMillis(refreshTokenDurationMs),
-                user
-        );
+        Optional<RefreshToken> existingToken = refreshTokenRepository.findByUser(user);
+
+        RefreshToken refreshToken = existingToken.orElse(new RefreshToken());
+
+
+        refreshToken.setToken(UUID.randomUUID().toString());
+        refreshToken.setUser(user);
+        refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
+//        RefreshToken refreshToken = new RefreshToken(
+//                UUID.randomUUID().toString(),
+//                Instant.now().plusMillis(refreshTokenDurationMs),
+//                user
+//        );
 
         RefreshToken savedToken = refreshTokenRepository.save(refreshToken);
         log.info("Refresh token created for user: {}", user.getId());

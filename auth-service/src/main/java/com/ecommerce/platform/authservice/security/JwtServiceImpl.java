@@ -19,11 +19,11 @@ import java.util.Date;
  * - Извлечение данных из токенов
  */
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class JwtServiceImpl implements JwtService {
 
-    private static final Logger log = LoggerFactory.getLogger(JwtServiceImpl.class);
 
     // Ключ для подписи токенов (HMAC-SHA256)
     private final SecretKey signKey;

@@ -3,7 +3,6 @@ package com.ecommerce.platform.authservice.service;
 import com.ecommerce.platform.authservice.dto.RefreshTokenRequest;
 import com.ecommerce.platform.authservice.exception.InvalidTokenException;
 import com.ecommerce.platform.authservice.exception.UserNotFoundException;
-import com.ecommerce.platform.authservice.model.User;
 import dto.AuthRequestDto;
 import dto.AuthResponseDto;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -48,4 +47,6 @@ public interface AuthService {
      * @throws UserNotFoundException если пользователь не существует
      */
     void logoutAll(Long userId);
+
+    AuthResponseDto register(AuthRequestDto request);
 }

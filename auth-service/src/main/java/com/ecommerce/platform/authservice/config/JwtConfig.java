@@ -43,35 +43,5 @@ public class JwtConfig {
                 .build();
     }
 
-    public String getSecret() {
-        return secret;
-    }
 
-    public void setSecret(String secret) {
-        this.secret = secret;
-    }
-
-    public long getAccessExpiration() {
-        return accessExpiration;
-    }
-
-    public void setAccessExpiration(long accessExpiration) {
-        this.accessExpiration = accessExpiration;
-    }
-
-    public long getRefreshExpiration() {
-        return refreshExpiration;
-    }
-
-    public void setRefreshExpiration(long refreshExpiration) {
-        this.refreshExpiration = refreshExpiration;
-    }
-
-    public String getIssuer() {
-        return issuer;
-    }
-
-    public void setIssuer(String issuer) {
-        this.issuer = issuer;
-    }
 }
