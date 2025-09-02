@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:14
     container_name: postgres_db
     environment:
       POSTGRES_DB: mydatabase
@@ -18,6 +18,6 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@example.com   # логин в web-интерфейсе
       PGADMIN_DEFAULT_PASSWORD: admin            # пароль в web-интерфейсе
     ports:
-      - "127.0.0.1:8080:80"                      # web-ui на http://localhost:8080
+      - "127.0.0.1:8081:80"                      # web-ui на http://localhost:8081
     depends_on:
       - postgres

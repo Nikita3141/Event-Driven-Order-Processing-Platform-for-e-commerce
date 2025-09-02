@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -22,19 +23,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
-
+@RequiredArgsConstructor
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
-
-    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService) {
-        this.jwtService = jwtService;
-        this.userDetailsService = userDetailsService;
-    }
 
     @Override
     protected void doFilterInternal(
@@ -42,37 +38,43 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NotNull HttpServletResponse response,
             @NotNull FilterChain filterChain
     ) throws ServletException, IOException {
+        // 1. Получаем заголовок Authorization
         final String authHeader = request.getHeader(Constant.AUTH_HEADER);
 
+        // 2. Проверяем наличие и формат заголовка
         if (authHeader == null || !authHeader.startsWith(Constant.BEARER_PREFIX)) {
             filterChain.doFilter(request, response);
             return;
         }
 
+        // 3. Извлекаем токен (после "Bearer ")
         final String jwt = authHeader.substring(Constant.BEARER_PREFIX.length());
+        // 4. Проверяем токен
+        if(jwtService.validateToken(jwt)){
+            // 5. Получаем имя пользователя
+            String username = jwtService.getUsernameFromToken(jwt);
+            // 6. Получаем пользователя из БД
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            // 7. Создаём объект аутентификации
 
-        try {
-            final String username = jwtService.extractUsername(jwt);
+            List<String> roles = jwtService.getRoles(jwt);
 
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            var authorities = roles.stream()
+                    .map(SimpleGrantedAuthority::new)
+                    .toList();
 
-                if (jwtService.isTokenValidForUser(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities()
-                    );
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                }
-            }
-        } catch (UsernameNotFoundException e) {
-            log.warn("User not found: {}", e.getMessage());
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "User not found");
-        } catch (JwtException e) {
-            log.warn("Invalid JWT token: {}", e.getMessage());
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT token");
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            authorities);
+            authenticationToken.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request));
+            // 8. Сохраняем в SecurityContext
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
         }
-
+        // 9. Передаём запрос дальше по цепочке фильтров
         filterChain.doFilter(request, response);
     }
 }

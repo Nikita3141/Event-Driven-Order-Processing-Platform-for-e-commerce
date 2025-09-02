@@ -2,22 +2,15 @@ package com.ecommerce.platform.authservice.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import org.springframework.security.core.GrantedAuthority;
 
-@Data
 @Entity
-@Table
-public class Role implements GrantedAuthority {
-
+@Data
+@Table(name = "roles") // Указываем имя таблицы
+public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    protected Long id;
+    private Long id;
 
-    @Column(name = "role_name" , unique = true)
-    private String role;
-
-    @Override
-    public String getAuthority() {
-        return role;
-    }
+    @Column(unique = true, nullable = false, length = 20)
+    private String name; // Название роли (например: ROLE_USER, ROLE_ADMIN)
 }

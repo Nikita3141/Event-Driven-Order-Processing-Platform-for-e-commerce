@@ -4,14 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users")
@@ -22,38 +19,30 @@ import java.util.stream.Collectors;
 public class User implements UserDetails {
 
     @Id
+    @Column(name= "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(name= "email" ,unique = true, nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(name = "password", nullable = false)
     private String password;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @Fetch(FetchMode.JOIN)
-    @JoinTable(name ="users_roles",
-            joinColumns = @JoinColumn(name ="user_id"),
-            inverseJoinColumns = @JoinColumn (name ="role_id"))
-    @Builder.Default
-    private Set<Role> roles = new HashSet<>();
+    @ManyToMany(fetch = FetchType.EAGER) // Связь многие-ко-многим, загрузка ролей сразу
+    @JoinTable(
+            name = "users_roles", // Имя связующей таблицы
+            joinColumns = @JoinColumn(name = "user_id"), // Столбец для текущей сущности
+            inverseJoinColumns = @JoinColumn(name = "role_id")) // Столбец для связанной сущности
+    private Set<Role> roles; // Список ролей пользователя
 
     @Override
-    public Set<? extends GrantedAuthority> getAuthorities() {
-        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(roles.toString());
-        return Set.of(authority);
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .toList();
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    @Override
     public String getUsername() {
         return email;
     }
@@ -78,19 +67,5 @@ public class User implements UserDetails {
         return true;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return Objects.equals(id, user.id) &&
-                Objects.equals(email, user.email) &&
-                Objects.equals(password, user.password) &&
-                Objects.equals(roles, user.roles);
-    }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, email, password, roles);
-    }
 }
